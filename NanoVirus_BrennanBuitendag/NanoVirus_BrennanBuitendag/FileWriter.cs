@@ -11,6 +11,7 @@ namespace NanoVirus_BrennanBuitendag
 {
     public static class FileWriter
     {
+        //Path to the MyDocuments folder of the current user
         private static string directory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\Nano Virus";
         private static string fileName = string.Format("{0}\\NanoVirusSimulation {1}.txt", directory, DateTime.Now.ToString("yyyy.MM.dd HH.mm.ss"));
 
@@ -25,7 +26,7 @@ namespace NanoVirus_BrennanBuitendag
             CreateDirectory();
         }
 
-        public static void Write(int cycleNumber)
+        public static void WriteToFile(int cycleNumber)
         {
             try
             {

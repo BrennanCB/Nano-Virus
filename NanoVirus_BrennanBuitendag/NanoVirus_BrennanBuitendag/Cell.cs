@@ -8,6 +8,7 @@ namespace NanoVirus_BrennanBuitendag
 {
     class Cell
     {
+        //Used to uniquely identify the specfic cell
         private int id;
 
         public int ID

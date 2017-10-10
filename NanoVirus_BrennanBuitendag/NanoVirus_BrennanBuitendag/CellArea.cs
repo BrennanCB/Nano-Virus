@@ -9,50 +9,17 @@ namespace NanoVirus_BrennanBuitendag
     class CellArea
     {
         private static CellArea instance = null;
-        private static readonly object lockerObj = new object();
 
-        private int cycleNumber = 0;
+        private int cycleNumber;
+        private int numberOfDestroyedCells;
 
         private Random rng = new Random();
+
+        private NanoVirus nanoVirus;
 
         private List<Cell> redBloodCells;
         private List<Cell> whiteBloodCells;
         private List<Cell> tumorousCells;
-        private NanoVirus nanoVirus;
-        private int numberOfDestroyedCells;
-
-        private CellArea()
-        {
-            redBloodCells = new List<Cell>();
-            whiteBloodCells = new List<Cell>();
-            tumorousCells = new List<Cell>();
-
-            numberOfDestroyedCells = 0;
-
-            for (int i = 0; i < 100; i++)
-            {
-                Cell cell = GenerateCell(i);
-
-                switch (cell.CellType)
-                {
-                    case CellType.RedBloodCell:
-                        redBloodCells.Add(cell);
-                        break;
-                    case CellType.WhiteBloodCell:
-                        whiteBloodCells.Add(cell);
-                        break;
-                    case CellType.TumorousCell:
-                        tumorousCells.Add(cell);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            int startIndex = rng.Next(0, RedBloodCells.Count);
-
-            nanoVirus = new NanoVirus(RedBloodCells[startIndex]);
-        }
 
         public static CellArea GetInstance
         {
@@ -111,15 +78,52 @@ namespace NanoVirus_BrennanBuitendag
             }
         }
 
+        //Private to ensure that other classes cannot create instances, ensuring there is only one instance in the program
+        private CellArea()
+        {
+            redBloodCells = new List<Cell>();
+            whiteBloodCells = new List<Cell>();
+            tumorousCells = new List<Cell>();
+
+            cycleNumber = 0;
+            numberOfDestroyedCells = 0;
+
+            //Generate the 100 cells needed
+            for (int i = 0; i < 100; i++)
+            {
+                Cell cell = GenerateCell(i);
+
+                switch (cell.CellType)
+                {
+                    case CellType.RedBloodCell:
+                        redBloodCells.Add(cell);
+                        break;
+                    case CellType.WhiteBloodCell:
+                        whiteBloodCells.Add(cell);
+                        break;
+                    case CellType.TumorousCell:
+                        tumorousCells.Add(cell);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            //Place nano virus onto random reb blood cell
+            int startIndex = rng.Next(0, RedBloodCells.Count);
+            nanoVirus = new NanoVirus(RedBloodCells[startIndex]);
+        }
+
         public Cell GenerateCell(int id)
         {
-            int cellTypeProb = rng.Next(1, 101);
+            int cellTypeProbibility = rng.Next(1, 101);
 
             CellType cellType;
 
-            if (cellTypeProb <= 5)
+            //Determines the type of cell that is generated
+            if (cellTypeProbibility <= 5)
                 cellType = CellType.TumorousCell;
-            else if (cellTypeProb > 5 && cellTypeProb <= 30)
+            else if (cellTypeProbibility > 5 && cellTypeProbibility <= 30)
                 cellType = CellType.WhiteBloodCell;
             else
                 cellType = CellType.RedBloodCell;
@@ -131,19 +135,19 @@ namespace NanoVirus_BrennanBuitendag
             return new Cell(id, cellType, x, y, z);
         }
 
-        public void MoveTumourCells()
+        public void InfectNewCells()
         {
             int tumorCount = TumorousCells.Count;
 
             for (int i = 0; i < tumorCount; i++)
             {
                 Cell tumorousCell = TumorousCells[i];
-                Cell infectedCell = null;
+                Cell cellToInfect = null;
 
                 if (RedBloodCells.Count > 0)
                 {
                     int smallestDistance = tumorousCell.CalculateDistance(RedBloodCells[0]);
-                    int smallestCell = 0;
+                    int smallestCellIndex = 0;
 
                     for (int j = 1; j < RedBloodCells.Count; j++)
                     {
@@ -152,20 +156,18 @@ namespace NanoVirus_BrennanBuitendag
                         if (distance < smallestDistance)
                         {
                             smallestDistance = distance;
-                            smallestCell = j;
+                            smallestCellIndex = j;
                          }
                     }
 
-                    infectedCell = RedBloodCells[smallestCell];
+                    cellToInfect = RedBloodCells[smallestCellIndex];
 
-                    RedBloodCells.RemoveAt(smallestCell);
-
-                    
+                    RedBloodCells.RemoveAt(smallestCellIndex);
                 }
                 else if (WhiteBloodCells.Count > 0)
                 {
                     int smallestDistance = tumorousCell.CalculateDistance(WhiteBloodCells[0]);
-                    int smallestCell = 0;
+                    int smallestCellIndex = 0;
 
                     for (int j = 1; j < WhiteBloodCells.Count; j++)
                     {
@@ -174,56 +176,51 @@ namespace NanoVirus_BrennanBuitendag
                         if (distance < smallestDistance)
                         {
                             smallestDistance = distance;
-                            smallestCell = j;
+                            smallestCellIndex = j;
                         }
                     }
 
-                    infectedCell = WhiteBloodCells[smallestCell];
+                    cellToInfect = WhiteBloodCells[smallestCellIndex];
 
-                    WhiteBloodCells.RemoveAt(smallestCell);
+                    WhiteBloodCells.RemoveAt(smallestCellIndex);
                 }
 
-                if (infectedCell != null)
+                if (cellToInfect != null)
                 {
-                    infectedCell.CellType = CellType.TumorousCell;
+                    cellToInfect.CellType = CellType.TumorousCell;
 
-                    tumorousCells.Add(infectedCell);
+                    tumorousCells.Add(cellToInfect);
                 }
             }
         }
 
-        public void MoveVirus()
+        public void VirusPerfromAction()
         {
-            if(nanoVirus.CellID == -1)
+            if(nanoVirus.CellID == -1 || nanoVirus.Cell.CellType != CellType.TumorousCell)
             {
                 List<Cell> cellsInRange = new List<Cell>(); 
 
                 for (int i = 0; i < TumorousCells.Count; i++)
                 {
                     if (nanoVirus.Cell.CalculateDistance(TumorousCells[i]) <= 5000)
-                    {
                         cellsInRange.Add(TumorousCells[i]);
-                    }
                 }
 
                 for (int i = 0; i < RedBloodCells.Count; i++)
                 {
                     if (nanoVirus.Cell.CalculateDistance(RedBloodCells[i]) <= 5000)
-                    {
                         cellsInRange.Add(RedBloodCells[i]);
-                    }
                 }
 
                 for (int i = 0; i < WhiteBloodCells.Count; i++)
                 {
                     if (nanoVirus.Cell.CalculateDistance(WhiteBloodCells[i]) <= 5000)
-                    {
                         cellsInRange.Add(WhiteBloodCells[i]);
-                    }
                 }
 
                 if (cellsInRange.Count > 0)
                 {
+                    //Choose a random cell that is in range to move to
                     int moveToIndex = rng.Next(0, cellsInRange.Count);
 
                     Cell moveToCell = cellsInRange[moveToIndex];
@@ -248,34 +245,8 @@ namespace NanoVirus_BrennanBuitendag
                 TumorousCells.RemoveAt(index);
                 numberOfDestroyedCells++;
 
+                //Used to tell the virus to move to a new cell in the next cycle
                 nanoVirus.CellID = -1;
-            }
-        }
-
-        private class NanoVirus
-        {
-            private int cellID;
-            private Cell cell;
-
-            public int CellID
-            {
-                get { return cellID; }
-                set { cellID = value; }
-            }
-
-            public Cell Cell
-            {
-                get { return cell; }
-                set
-                {
-                    cell = value;
-                    cellID = value.ID;
-                }
-            }
-
-            public NanoVirus(Cell cell)
-            {
-                this.Cell = cell;
             }
         }
 

@@ -46,6 +46,7 @@
     <Compile Include="CellArea.cs" />
     <Compile Include="CellType.cs" />
     <Compile Include="FileWriter.cs" />
+    <Compile Include="NanoVirus.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
